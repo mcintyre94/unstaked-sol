@@ -2,19 +2,17 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Root, { loader as rootLoader } from './routes/root'
-import { ConnectProvider, DisconnectProvider, useConnect, useWallet, useWallets, WalletProvider, WalletsProvider } from '@wallet-standard/react-core'
-
-
+import Root, { loader as rootLoader, action as rootAction } from './routes/root'
+import { ConnectProvider, DisconnectProvider, useWallets, WalletProvider, WalletsProvider } from '@wallet-standard/react-core'
 
 function Main() {
   const { wallets } = useWallets();
-  const { setWallet } = useWallet();
 
   const router = createBrowserRouter([
     {
       path: "/",
-      loader: () => rootLoader(wallets, setWallet),
+      action: rootAction,
+      loader: () => rootLoader(wallets),
       element: <Root />
     }
   ])
