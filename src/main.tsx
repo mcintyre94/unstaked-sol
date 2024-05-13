@@ -1,24 +1,30 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import './index.css'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Root, { loader as rootLoader, action as rootAction } from './routes/root'
-import { ConnectProvider, DisconnectProvider, useWallets, WalletProvider, WalletsProvider } from '@wallet-standard/react-core'
+import Root, { loader as rootLoader } from './routes/root'
+import { ConnectProvider, DisconnectProvider, WalletProvider, WalletsProvider } from '@wallet-standard/react-core'
+import { ChakraProvider, extendTheme, ThemeConfig } from '@chakra-ui/react'
 
 function Main() {
-  const { wallets } = useWallets();
+  const config: ThemeConfig = {
+    initialColorMode: 'dark',
+    useSystemColorMode: false
+  }
+  const theme = extendTheme({ config })
+
 
   const router = createBrowserRouter([
     {
       path: "/",
-      action: rootAction,
-      loader: () => rootLoader(wallets),
+      loader: rootLoader,
       element: <Root />
-    }
+    },
   ])
 
   return (
-    <RouterProvider router={router} />
+    <ChakraProvider theme={theme}>
+      <RouterProvider router={router} />
+    </ChakraProvider>
   )
 }
 
