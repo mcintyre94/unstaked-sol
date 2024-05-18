@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Root, { loader as rootLoader } from './routes/root'
+import Root from './routes/root'
 import { ConnectProvider, DisconnectProvider, WalletProvider, WalletsProvider } from '@wallet-standard/react-core'
 import { ChakraProvider, extendTheme, ThemeConfig } from '@chakra-ui/react'
 
@@ -16,7 +16,6 @@ function Main() {
   const router = createBrowserRouter([
     {
       path: "/",
-      loader: rootLoader,
       element: <Root />
     },
   ])
