@@ -1,8 +1,8 @@
-import { Checkbox, Container, VStack } from "@chakra-ui/react";
 import { useWallet } from "@wallet-standard/react-core";
 import { useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
+import { Checkbox, Container, Flex, Text } from "@mantine/core";
 
 export default function Root() {
     const { isLoadingStoredWallet } = useWalletLocalStorage();
@@ -13,16 +13,19 @@ export default function Root() {
     if (isLoadingStoredWallet) return null;
 
     return (
-        <Container margin={8}>
-            <VStack>
+        <Container m={32}>
+            <Flex direction='column' align='center' gap='xl'>
                 <WalletMultiButton />
 
-                <div>
-                    {accounts.length > 0 ? accounts.map(account => (
-                        <Checkbox key={account.address} defaultChecked={true}>{account.label} ({account.address})</Checkbox>
-                    )) : <span>Connect a wallet to get started...</span>}
-                </div>
-            </VStack>
-        </Container>
+                <Container>
+                    {accounts.length > 0 ?
+                        accounts.map(account => (
+                            <Checkbox key={account.address} defaultChecked={true} size='md' label={`${account.label} (${account.address})`} />
+                        )) :
+                        <Text> Connect a wallet to get started...</Text>
+                    }
+                </Container>
+            </Flex >
+        </Container >
     )
 }

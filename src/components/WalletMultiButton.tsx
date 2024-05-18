@@ -1,9 +1,9 @@
-import { ChevronDownIcon } from "@chakra-ui/icons";
-import { Menu, MenuButton, Button, MenuList, MenuItem, HStack, Image } from "@chakra-ui/react";
+import { Menu, Image, Button } from "@mantine/core";
 import { Wallet } from "@wallet-standard/base";
 import { StandardConnectFeature } from "@wallet-standard/features";
 import { useWallets, useWallet, hasConnectFeature, useConnect, useDisconnect } from "@wallet-standard/react-core";
 import { useState, useMemo, useCallback } from "react";
+import { IconChevronCompactDown, IconChevronDown } from '@tabler/icons-react';
 
 function WalletMultiButtonNotConnected() {
     const { wallets } = useWallets();
@@ -24,22 +24,25 @@ function WalletMultiButtonNotConnected() {
 
     return (
         <Menu>
-            <MenuButton isDisabled={connecting} as={Button} rightIcon={<ChevronDownIcon />}>
-                {connecting ? "Connecting..." : "Connect Wallet"}
-            </MenuButton>
-            <MenuList>
-                {connectableWallets.map(wallet => (
-                    <MenuItem key={wallet.name} value={wallet.name} onClick={() => connect(wallet)}>
+            <Menu.Target>
+                <Button miw={150} disabled={connecting} rightSection={<IconChevronDown />}>{connecting ? "Connecting..." : "Connect Wallet"}</Button>
+            </Menu.Target>
+
+            <Menu.Dropdown miw={200}>
+                {connectableWallets.map(wallet =>
+                    <Menu.Item onClick={() => connect(wallet)} py={8} key={wallet.name} leftSection={
                         <Image
-                            boxSize='2rem'
+                            h='1.8rem'
+                            w='1.8rem'
                             src={wallet.icon}
                             alt={`${wallet.name} logo`}
                             mr='12px'
                         />
-                        <span>{wallet.name}</span>
-                    </MenuItem>
-                ))}
-            </MenuList>
+                    }>
+                        {wallet.name}
+                    </Menu.Item>
+                )}
+            </Menu.Dropdown>
         </Menu>
     )
 }
@@ -62,23 +65,26 @@ function WalletMultiButtonConnected() {
         }
     }, [disconnect, setWallet])
 
+    const accountsCount = wallet!.accounts.length;
+
     return (
         <Menu>
-            <MenuButton isDisabled={disconnecting || connecting} as={Button} rightIcon={<ChevronDownIcon />}>
-                <HStack>
+            <Menu.Target>
+                <Button miw={150} disabled={disconnecting || connecting} leftSection={
                     <Image
-                        boxSize='2rem'
+                        h='1.8rem'
+                        w='1.8rem'
                         src={wallet!.icon}
                         alt={`${wallet!.name} logo`}
                         mr='12px'
                     />
-                    <span>{wallet!.accounts.length} accounts</span>
-                </HStack>
-            </MenuButton>
-            <MenuList>
-                <MenuItem onClick={() => connect?.({ silent: false })}>Change Accounts</MenuItem>
-                <MenuItem onClick={myDisconnect}>Disconnect</MenuItem>
-            </MenuList>
+                } rightSection={<IconChevronDown />}>{accountsCount} {accountsCount === 1 ? "Account" : "Accounts"}</Button>
+            </Menu.Target>
+
+            <Menu.Dropdown>
+                <Menu.Item onClick={() => connect?.({ silent: false })}>Change Accounts</Menu.Item>
+                <Menu.Item onClick={myDisconnect}>Disconnect</Menu.Item>
+            </Menu.Dropdown>
         </Menu>
     )
 }
