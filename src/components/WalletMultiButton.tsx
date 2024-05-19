@@ -1,9 +1,9 @@
-import { Menu, Image, Button } from "@mantine/core";
+import { Menu, Image, Button, CopyButton, Text } from "@mantine/core";
 import { Wallet } from "@wallet-standard/base";
 import { StandardConnectFeature } from "@wallet-standard/features";
 import { useWallets, useWallet, hasConnectFeature, useConnect, useDisconnect } from "@wallet-standard/react-core";
 import { useState, useMemo, useCallback } from "react";
-import { IconChevronCompactDown, IconChevronDown } from '@tabler/icons-react';
+import { IconChevronDown } from '@tabler/icons-react';
 
 function WalletMultiButtonNotConnected() {
     const { wallets } = useWallets();
@@ -23,7 +23,7 @@ function WalletMultiButtonNotConnected() {
     }, [setWallet])
 
     return (
-        <Menu>
+        <Menu transitionProps={{ transition: 'pop-bottom-right', duration: 200 }}>
             <Menu.Target>
                 <Button miw={150} disabled={connecting} rightSection={<IconChevronDown />}>{connecting ? "Connecting..." : "Connect Wallet"}</Button>
             </Menu.Target>
@@ -65,10 +65,10 @@ function WalletMultiButtonConnected() {
         }
     }, [disconnect, setWallet])
 
-    const accountsCount = wallet!.accounts.length;
+    const accounts = wallet!.accounts;
 
     return (
-        <Menu>
+        <Menu transitionProps={{ transition: 'pop-bottom-right', duration: 200 }}>
             <Menu.Target>
                 <Button miw={150} disabled={disconnecting || connecting} leftSection={
                     <Image
@@ -78,10 +78,17 @@ function WalletMultiButtonConnected() {
                         alt={`${wallet!.name} logo`}
                         mr='12px'
                     />
-                } rightSection={<IconChevronDown />}>{accountsCount} {accountsCount === 1 ? "Account" : "Accounts"}</Button>
+                } rightSection={<IconChevronDown />}>{accounts.length} {accounts.length === 1 ? "Account" : "Accounts"}</Button>
             </Menu.Target>
 
-            <Menu.Dropdown>
+            <Menu.Dropdown miw={200}>
+                <Menu.Item>
+                    <CopyButton value={accounts.map(a => a.address).join(', ')}>
+                        {({ copied, copy }) => (
+                            copied ? <Text>Copied</Text> : <Text onClick={copy}>Copy {accounts.length === 1 ? 'Address' : 'Addresses'}</Text>
+                        )}
+                    </CopyButton>
+                </Menu.Item>
                 <Menu.Item onClick={() => connect?.({ silent: false })}>Change Accounts</Menu.Item>
                 <Menu.Item onClick={myDisconnect}>Disconnect</Menu.Item>
             </Menu.Dropdown>
