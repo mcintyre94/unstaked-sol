@@ -2,7 +2,7 @@ import { Text, TextProps, Tooltip, CopyButton, ActionIcon, rem, Group } from "@m
 import { IconCopy } from "@tabler/icons-react";
 import { WalletAccount } from "@wallet-standard/base";
 
-function shortAddress(address: string) {
+export function shortAddress(address: string) {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 

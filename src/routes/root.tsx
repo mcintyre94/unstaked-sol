@@ -2,11 +2,12 @@ import { useWallet } from "@wallet-standard/react-core";
 import { useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
-import { Button, Checkbox, Container, Flex, SimpleGrid, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, Text, TextInput } from "@mantine/core";
-import { AccountLabel } from "../components/AccountLabel";
+import { Button, Checkbox, Container, Flex, MantineColor, SimpleGrid, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, Text, TextInput } from "@mantine/core";
+import { AccountLabel, shortAddress } from "../components/AccountLabel";
 import { ActionFunctionArgs, Form, useActionData, useNavigation } from "react-router-dom";
 import { Address, LamportsUnsafeBeyond2Pow53Minus1, createSolanaRpc, isAddress, mainnet } from "@solana/web3.js";
 import { displayLamportsAsSol } from "../utils/lamports";
+import { PieChart, PieChartCell } from "@mantine/charts";
 
 type AddressWithBalance = {
     address: Address,
@@ -54,6 +55,7 @@ export async function action({ request }: ActionFunctionArgs): Promise<ActionRes
     }
 }
 
+const colors: MantineColor[] = ["red", "blue", "yellow", "green", "orange", "grape", "pink", "cyan", "lime", "white"]
 
 export default function Root() {
     const { isLoadingStoredWallet } = useWalletLocalStorage();
@@ -74,6 +76,19 @@ export default function Root() {
     const fetchedData = useMemo(() => {
         return actionData?.kind === 'success' ? actionData.data : []
     }, [actionData]);
+
+    // const pieChartData: PieChartCell[] = useMemo(() => {
+    //     return actionData?.kind === 'success' ? actionData.data.slice(0, 10).map((item, index) => ({
+    //         name: addressLabels[item.address] ?? shortAddress(item.address),
+    //         value: Number(item.balanceLamports),
+    //         color: colors[index],
+    //     })).sort((a, b) => a.value - b.value) : []
+    // }, [actionData, addressLabels]);
+
+    const pieChartData: PieChartCell[] = [
+        { name: 'hot', value: 50656342, color: 'red' },
+        { name: 'trading', value: 543957973, color: 'blue' },
+    ];
 
     if (isLoadingStoredWallet) return null;
 
@@ -105,28 +120,43 @@ export default function Root() {
                     </Form>
                 </Flex>
 
-                <Table striped withRowBorders withTableBorder>
-                    <TableThead>
-                        <TableTr>
-                            <TableTh>{hasLabels ? "Label" : "Address"}</TableTh>
-                            <TableTh>Unstaked SOL</TableTh>
-                        </TableTr>
-                    </TableThead>
-                    <TableTbody>
-                        {pendingAddresses?.map(address => (
+                <Stack>
+                    <Table striped withRowBorders withTableBorder>
+                        <TableThead>
                             <TableTr>
-                                <TableTd>{addressLabels[address.toString()] ?? address.toString()}</TableTd>
-                                <TableTd>Loading...</TableTd>
+                                <TableTh>{hasLabels ? "Label" : "Address"}</TableTh>
+                                <TableTh>Unstaked SOL</TableTh>
                             </TableTr>
-                        ))}
-                        {!pendingAddresses && fetchedData.map(({ address, balanceLamports }) => (
-                            <TableTr>
-                                <TableTd>{addressLabels[address.toString()] ?? address.toString()}</TableTd>
-                                <TableTd>{displayLamportsAsSol(balanceLamports)}</TableTd>
-                            </TableTr>
-                        ))}
-                    </TableTbody>
-                </Table>
+                        </TableThead>
+                        <TableTbody>
+                            {pendingAddresses?.map(address => (
+                                <TableTr>
+                                    <TableTd>{addressLabels[address.toString()] ?? address.toString()}</TableTd>
+                                    <TableTd>Loading...</TableTd>
+                                </TableTr>
+                            ))}
+                            {!pendingAddresses && fetchedData.map(({ address, balanceLamports }) => (
+                                <TableTr>
+                                    <TableTd>{addressLabels[address.toString()] ?? address.toString()}</TableTd>
+                                    <TableTd>{displayLamportsAsSol(balanceLamports)}</TableTd>
+                                </TableTr>
+                            ))}
+                        </TableTbody>
+                    </Table>
+
+                    <Container mih={500} miw={500}>
+                        {
+                            pieChartData.length > 0 ?
+                                <PieChart
+                                    data={pieChartData}
+                                    withTooltip
+                                    tooltipProps={{ wrapperStyle: { background: 'white', color: 'darkblue', padding: 4 } }}
+                                    tooltipDataSource='segment'
+                                    valueFormatter={n => `${displayLamportsAsSol(BigInt(n))} SOL`}
+                                    style={{ width: '100%', height: '100%' }}
+                                /> : null}
+                    </Container>
+                </Stack>
             </SimpleGrid>
         </Container>
     )
