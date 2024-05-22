@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Root from './routes/root'
+import Root, { action as rootAction } from './routes/root'
 import { ConnectProvider, DisconnectProvider, WalletProvider, WalletsProvider } from '@wallet-standard/react-core'
 
 import '@mantine/core/styles.css';
@@ -10,7 +10,8 @@ import { MantineProvider } from '@mantine/core'
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Root />
+    element: <Root />,
+    action: rootAction,
   },
 ])
 

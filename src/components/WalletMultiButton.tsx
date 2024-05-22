@@ -25,7 +25,7 @@ function WalletMultiButtonNotConnected() {
     return (
         <Menu transitionProps={{ transition: 'pop-bottom-right', duration: 200 }}>
             <Menu.Target>
-                <Button miw={150} disabled={connecting} rightSection={<IconChevronDown />}>{connecting ? "Connecting..." : "Connect Wallet"}</Button>
+                <Button miw={150} fit-content="true" disabled={connecting} rightSection={<IconChevronDown />}>{connecting ? "Connecting..." : "Connect Wallet"}</Button>
             </Menu.Target>
 
             <Menu.Dropdown miw={200}>
@@ -70,7 +70,7 @@ function WalletMultiButtonConnected() {
     return (
         <Menu transitionProps={{ transition: 'pop-bottom-right', duration: 200 }}>
             <Menu.Target>
-                <Button miw={150} disabled={disconnecting || connecting} leftSection={
+                <Button miw={150} fit-content="true" disabled={disconnecting || connecting} leftSection={
                     <Image
                         h='1.8rem'
                         w='1.8rem'
