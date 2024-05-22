@@ -3,11 +3,13 @@ import { useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
 import { Button, Checkbox, Container, Flex, MantineColor, SimpleGrid, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, Text, TextInput } from "@mantine/core";
-import { AccountLabel, shortAddress } from "../components/AccountLabel";
+import { AccountLabel } from "../components/AccountLabel";
 import { ActionFunctionArgs, Form, useActionData, useNavigation } from "react-router-dom";
 import { Address, LamportsUnsafeBeyond2Pow53Minus1, createSolanaRpc, isAddress, mainnet } from "@solana/web3.js";
 import { displayLamportsAsSol } from "../utils/lamports";
 import { PieChart, PieChartCell } from "@mantine/charts";
+import { queryClient } from '../queries/queryClient';
+import { getBalance, getBalanceQueryKey } from "../queries/getBalance";
 
 type AddressWithBalance = {
     address: Address,
@@ -23,8 +25,6 @@ type ActionResponse = {
 }
 
 export async function action({ request }: ActionFunctionArgs): Promise<ActionResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 5_000));
-
     const formData = await request.formData();
     const rpcAddress = formData.get('rpc');
     if (!rpcAddress) {
@@ -45,8 +45,11 @@ export async function action({ request }: ActionFunctionArgs): Promise<ActionRes
     const data: AddressWithBalance[] = []
     // one at a time to avoid rate limits
     for (const address of addresses) {
-        const { value } = await rpc.getBalance(address).send({ abortSignal: request.signal })
-        data.push({ address, balanceLamports: value })
+        const balanceLamports = await queryClient.fetchQuery({
+            queryKey: getBalanceQueryKey(address),
+            queryFn: () => getBalance(rpc, address, request.signal)
+        })
+        data.push({ address, balanceLamports })
     }
 
     return {
@@ -77,18 +80,13 @@ export default function Root() {
         return actionData?.kind === 'success' ? actionData.data : []
     }, [actionData]);
 
-    // const pieChartData: PieChartCell[] = useMemo(() => {
-    //     return actionData?.kind === 'success' ? actionData.data.slice(0, 10).map((item, index) => ({
-    //         name: addressLabels[item.address] ?? shortAddress(item.address),
-    //         value: Number(item.balanceLamports),
-    //         color: colors[index],
-    //     })).sort((a, b) => a.value - b.value) : []
-    // }, [actionData, addressLabels]);
-
-    const pieChartData: PieChartCell[] = [
-        { name: 'hot', value: 50656342, color: 'red' },
-        { name: 'trading', value: 543957973, color: 'blue' },
-    ];
+    const pieChartData: PieChartCell[] = useMemo(() => {
+        return actionData?.kind === 'success' ? actionData.data.slice(0, 10).map((item, index) => ({
+            name: addressLabels[item.address] ?? shortAddress(item.address),
+            value: Number(item.balanceLamports),
+            color: colors[index],
+        })).sort((a, b) => a.value - b.value) : []
+    }, [actionData, addressLabels]);
 
     if (isLoadingStoredWallet) return null;
 
@@ -129,6 +127,8 @@ export default function Root() {
                             </TableTr>
                         </TableThead>
                         <TableTbody>
+                            {/* TODO: improve the optimistic/fetching UI */}
+                            {/* Should only show "Loading..." on *new* addresses */}
                             {pendingAddresses?.map(address => (
                                 <TableTr>
                                     <TableTd>{addressLabels[address.toString()] ?? address.toString()}</TableTd>

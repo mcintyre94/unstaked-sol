@@ -6,6 +6,9 @@ import { ConnectProvider, DisconnectProvider, WalletProvider, WalletsProvider } 
 
 import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from './queries/queryClient'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
 const router = createBrowserRouter([
   {
@@ -15,6 +18,7 @@ const router = createBrowserRouter([
   },
 ])
 
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <WalletsProvider>
@@ -22,7 +26,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ConnectProvider>
           <DisconnectProvider>
             <MantineProvider defaultColorScheme='dark'>
-              <RouterProvider router={router} />
+              <QueryClientProvider client={queryClient}>
+                <ReactQueryDevtools initialIsOpen={false} />
+                <RouterProvider router={router} />
+              </QueryClientProvider>
             </MantineProvider>
           </DisconnectProvider>
         </ConnectProvider>

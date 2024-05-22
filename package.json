@@ -15,6 +15,8 @@
     "@mantine/hooks": "^7.9.2",
     "@solana/web3.js": "^2.0.0-preview.3",
     "@tabler/icons-react": "^3.4.0",
+    "@tanstack/react-query": "^5.37.1",
+    "@tanstack/react-query-devtools": "^5.37.1",
     "@wallet-standard/base": "^1.0.1",
     "@wallet-standard/features": "^1.0.3",
     "@wallet-standard/react-core": "^0.1.4",
