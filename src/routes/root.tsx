@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
 import { Button, Checkbox, Container, Flex, MantineColor, SimpleGrid, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, Text, TextInput } from "@mantine/core";
-import { AccountLabel } from "../components/AccountLabel";
+import { AccountLabel, shortAddress } from "../components/AccountLabel";
 import { ActionFunctionArgs, Form, useActionData, useNavigation } from "react-router-dom";
 import { Address, LamportsUnsafeBeyond2Pow53Minus1, createSolanaRpc, isAddress, mainnet } from "@solana/web3.js";
 import { displayLamportsAsSol } from "../utils/lamports";
@@ -52,6 +52,8 @@ export async function action({ request }: ActionFunctionArgs): Promise<ActionRes
         data.push({ address, balanceLamports })
     }
 
+    data.sort((a, b) => Number(b.balanceLamports - a.balanceLamports));
+
     return {
         kind: 'success',
         data,
@@ -59,6 +61,36 @@ export async function action({ request }: ActionFunctionArgs): Promise<ActionRes
 }
 
 const colors: MantineColor[] = ["red", "blue", "yellow", "green", "orange", "grape", "pink", "cyan", "lime", "white"]
+
+type TableRow = {
+    address: Address,
+    balanceLamports: LamportsUnsafeBeyond2Pow53Minus1 | undefined
+};
+
+function makeTableRows(
+    fetchedData: AddressWithBalance[],
+    pendingAddresses: Address[] | undefined,
+): TableRow[] {
+    const isPending = pendingAddresses !== undefined;
+    const pendingAddressesSet = new Set(pendingAddresses);
+    const fetchedAddressesSet = new Set(fetchedData.map(({ address }) => address))
+
+    // filter pending to remove already fetched, since the data won't change
+    const filteredPendingAddresses = pendingAddresses?.filter((address) => !fetchedAddressesSet.has(address)) ?? [];
+
+    // if pending, remove from fetched if it is not in the pending addresses
+    // this means if the user unselected the checkbox, we immediately remove it
+    const filteredFetchedData = isPending ?
+        fetchedData.filter(({ address }) => pendingAddressesSet.has(address)) :
+        fetchedData;
+
+    const pendingRows: TableRow[] = (filteredPendingAddresses ?? []).map(address => ({
+        address,
+        balanceLamports: undefined
+    }));
+
+    return (filteredFetchedData as TableRow[]).concat(...pendingRows);
+}
 
 export default function Root() {
     const { isLoadingStoredWallet } = useWalletLocalStorage();
@@ -73,20 +105,28 @@ export default function Root() {
 
     const navigation = useNavigation();
     const pendingAddresses = useMemo(() => {
-        return navigation.formData?.getAll('addresses')
+        const addresses = navigation.formData?.getAll('addresses');
+        return addresses?.map(a => a.toString() as Address)
     }, [navigation.formData])
 
     const fetchedData = useMemo(() => {
         return actionData?.kind === 'success' ? actionData.data : []
     }, [actionData]);
 
+    const tableData = useMemo(() => {
+        return makeTableRows(fetchedData, pendingAddresses)
+    }, [fetchedData, pendingAddresses]);
+
     const pieChartData: PieChartCell[] = useMemo(() => {
-        return actionData?.kind === 'success' ? actionData.data.slice(0, 10).map((item, index) => ({
-            name: addressLabels[item.address] ?? shortAddress(item.address),
-            value: Number(item.balanceLamports),
-            color: colors[index],
-        })).sort((a, b) => a.value - b.value) : []
-    }, [actionData, addressLabels]);
+        return tableData
+            .filter(({ balanceLamports }) => balanceLamports !== undefined)
+            .slice(0, 10)
+            .map(({ address, balanceLamports }, index) => ({
+                name: addressLabels[address] ?? shortAddress(address),
+                value: Number(balanceLamports),
+                color: colors[index]
+            }))
+    }, [tableData, addressLabels]);
 
     if (isLoadingStoredWallet) return null;
 
@@ -111,7 +151,7 @@ export default function Root() {
                                 }
                             </Stack>
 
-                            <Button type="submit" fit-content="true">
+                            <Button type="submit" fit-content="true" disabled={pendingAddresses !== undefined}>
                                 Fetch
                             </Button>
                         </Flex>
@@ -127,34 +167,28 @@ export default function Root() {
                             </TableTr>
                         </TableThead>
                         <TableTbody>
-                            {/* TODO: improve the optimistic/fetching UI */}
-                            {/* Should only show "Loading..." on *new* addresses */}
-                            {pendingAddresses?.map(address => (
+                            {tableData.map(({ address, balanceLamports }) => (
                                 <TableTr>
-                                    <TableTd>{addressLabels[address.toString()] ?? address.toString()}</TableTd>
-                                    <TableTd>Loading...</TableTd>
-                                </TableTr>
-                            ))}
-                            {!pendingAddresses && fetchedData.map(({ address, balanceLamports }) => (
-                                <TableTr>
-                                    <TableTd>{addressLabels[address.toString()] ?? address.toString()}</TableTd>
-                                    <TableTd>{displayLamportsAsSol(balanceLamports)}</TableTd>
+                                    <TableTd>{addressLabels[address.toString()] ?? address}</TableTd>
+                                    <TableTd>{balanceLamports ? displayLamportsAsSol(balanceLamports) : "Loading..."}</TableTd>
                                 </TableTr>
                             ))}
                         </TableTbody>
                     </Table>
 
-                    <Container mih={500} miw={500}>
+                    <Container mih={300} miw={300}>
                         {
                             pieChartData.length > 0 ?
                                 <PieChart
+                                    size={200}
                                     data={pieChartData}
                                     withTooltip
                                     tooltipProps={{ wrapperStyle: { background: 'white', color: 'darkblue', padding: 4 } }}
                                     tooltipDataSource='segment'
                                     valueFormatter={n => `${displayLamportsAsSol(BigInt(n))} SOL`}
                                     style={{ width: '100%', height: '100%' }}
-                                /> : null}
+                                /> : null
+                        }
                     </Container>
                 </Stack>
             </SimpleGrid>
