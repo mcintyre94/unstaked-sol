@@ -2,7 +2,7 @@ import { useWallet } from "@wallet-standard/react-core";
 import { useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
-import { Button, Container, Flex, Loader, MantineColor, SimpleGrid, Stack, Table, TableData, Text, TextInput } from "@mantine/core";
+import { Box, Button, ColorSwatch, Container, Flex, Loader, MantineColor, SimpleGrid, Stack, Table, TableData, Text, TextInput } from "@mantine/core";
 import { shortAddress } from "../components/AccountLabel";
 import { ActionFunctionArgs, Form, useActionData, useNavigation } from "react-router-dom";
 import { Address, LamportsUnsafeBeyond2Pow53Minus1, createSolanaRpc, isAddress, mainnet } from "@solana/web3.js";
@@ -61,7 +61,7 @@ export async function action({ request }: ActionFunctionArgs): Promise<ActionRes
     }
 }
 
-const colors: MantineColor[] = ["red", "blue", "yellow", "green", "orange", "grape", "pink", "cyan", "lime", "white"]
+const colors: MantineColor[] = ["red.6", "blue.6", "yellow.6", "green.6", "grape.6", "pink.6", "cyan.6", "lime.6", "orange.6", "violet.6"]
 
 type TableRow = {
     address: Address,
@@ -120,10 +120,13 @@ export default function Root() {
 
     const tableData: TableData = {
         head: [
+            "",
             hasLabels ? "Label" : "Address",
             "Unstaked SOL"
         ],
-        body: tableRowData.map(({ address, balanceLamports }) => [
+        body: tableRowData.map(({ address, balanceLamports }, index) => [
+            // Note: not using ColorSwatch because it doesn't work with theme colors
+            balanceLamports === undefined || colors[index] === undefined ? "" : <Box h={10} w={10} style={{ borderRadius: "var(--mantine-radius-md)" }} bg={colors[index]} />,
             addressLabels[address.toString()] ?? address,
             balanceLamports ? displayLamportsAsSol(balanceLamports) : <Loader size='xs' />
         ])
@@ -174,11 +177,11 @@ export default function Root() {
                 <Stack>
                     <Table striped withRowBorders withTableBorder data={tableData} />
 
-                    <Container mih={300} miw={300}>
+                    <Container mih={400} miw={400}>
                         {
                             pieChartData.length > 0 ?
                                 <PieChart
-                                    size={200}
+                                    size={300}
                                     data={pieChartData}
                                     withTooltip
                                     tooltipProps={{ wrapperStyle: { background: 'white', color: 'darkblue', padding: 4 } }}

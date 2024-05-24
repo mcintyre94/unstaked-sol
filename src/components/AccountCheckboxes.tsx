@@ -1,33 +1,32 @@
-import { useListState } from "@mantine/hooks";
 import { WalletAccount } from "@wallet-standard/base"
 import { AccountLabel } from "./AccountLabel";
 import { Checkbox } from "@mantine/core";
+import { useState } from "react";
 
 type Props = {
     accounts: readonly WalletAccount[]
 };
 
 export default function AccountCheckboxes({ accounts }: Props) {
-    const initialValues = accounts.map(account => ({
-        account,
-        checked: true,
-    }));
+    const [checkedStates, setCheckedStates] = useState(Array.from({ length: accounts.length }, () => true))
 
-    const [values, handlers] = useListState(initialValues);
+    const allChecked = checkedStates.every(value => value);
+    const indeterminate = checkedStates.some(value => value) && !allChecked;
 
-    const allChecked = values.every((value) => value.checked);
-    const indeterminate = values.some((value) => value.checked) && !allChecked;
-
-    const accountCheckboxes = values.map((value, index) => (
+    const accountCheckboxes = accounts.map((account, index) => (
         <Checkbox
             name='addresses'
             size='md'
             ml='md'
-            key={value.account.address}
-            value={value.account.address}
-            checked={value.checked}
-            label={<AccountLabel account={value.account} />}
-            onChange={(e) => handlers.setItemProp(index, "checked", e.currentTarget.checked)}
+            key={account.address}
+            value={account.address}
+            checked={checkedStates[index]}
+            label={<AccountLabel account={account} />}
+            onChange={(e) => setCheckedStates(current => {
+                const updated = [...current];
+                updated[index] = e.target.checked;
+                return updated
+            })}
         />
     ));
 
@@ -39,9 +38,7 @@ export default function AccountCheckboxes({ accounts }: Props) {
                 checked={allChecked}
                 indeterminate={indeterminate}
                 aria-label="Toggle all accounts"
-                onChange={() => handlers.setState(current =>
-                    current.map(value => ({ ...value, checked: !allChecked }))
-                )}
+                onChange={() => setCheckedStates(Array.from({ length: accounts.length }, () => !allChecked))}
             />
             {accountCheckboxes}
         </>
