@@ -2,7 +2,7 @@ import { useWallet } from "@wallet-standard/react-core";
 import { useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
-import { Box, Button, ColorSwatch, Container, Flex, Loader, MantineColor, SimpleGrid, Stack, Table, TableData, Text, TextInput } from "@mantine/core";
+import { Box, Button, Container, Flex, Loader, MantineColor, SimpleGrid, Stack, Table, TableData, Text, TextInput } from "@mantine/core";
 import { shortAddress } from "../components/AccountLabel";
 import { ActionFunctionArgs, Form, useActionData, useNavigation } from "react-router-dom";
 import { Address, LamportsUnsafeBeyond2Pow53Minus1, createSolanaRpc, isAddress, mainnet } from "@solana/web3.js";
@@ -128,7 +128,7 @@ export default function Root() {
             // Note: not using ColorSwatch because it doesn't work with theme colors
             balanceLamports === undefined || colors[index] === undefined ? "" : <Box h={10} w={10} style={{ borderRadius: "var(--mantine-radius-md)" }} bg={colors[index]} />,
             addressLabels[address.toString()] ?? address,
-            balanceLamports ? displayLamportsAsSol(balanceLamports) : <Loader size='xs' />
+            balanceLamports ? `◎${displayLamportsAsSol(balanceLamports)}` : <Loader size='xs' />
         ])
     }
 
@@ -147,25 +147,20 @@ export default function Root() {
 
     return (
         <Container size='lg' mt={32}>
-            <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <SimpleGrid cols={{ base: 1, md: 2 }}>
 
-                <Flex direction='column' gap='lg' align='flex-start' style={{ width: '100%' }}>
+                <Flex direction='column' gap='lg' align='flex-start'>
                     <WalletMultiButton />
 
                     <Form method="POST">
 
                         <Flex direction='column' gap='lg' align='flex-start'>
-                            <TextInput w='100%' required label="RPC Address" placeholder="https://mainnet.helius-rpc.com?api-key=" name='rpc' />
+                            <TextInput required label="RPC Address" placeholder="https://mainnet.helius-rpc.com?api-key=" name='rpc' />
 
-                            <Stack gap={2}>
-                                {accounts.length > 0 ?
-                                    // TODO: probably make this work better with a single account
-                                    // maybe just hide it all and just have the fetch button?
-                                    <AccountCheckboxes accounts={accounts} />
-                                    :
-                                    <Text> Connect a wallet to get started...</Text>
-                                }
-                            </Stack>
+                            {accounts.length > 0 ?
+                                <AccountCheckboxes accounts={accounts} /> :
+                                <Text> Connect a wallet to get started...</Text>
+                            }
 
                             <Button type="submit" fit-content="true" disabled={pendingAddresses !== undefined}>
                                 Fetch

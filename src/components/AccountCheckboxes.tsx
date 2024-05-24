@@ -1,6 +1,6 @@
 import { WalletAccount } from "@wallet-standard/base"
 import { AccountLabel } from "./AccountLabel";
-import { Checkbox } from "@mantine/core";
+import { Checkbox, Stack } from "@mantine/core";
 import { useState } from "react";
 
 type Props = {
@@ -10,6 +10,17 @@ type Props = {
 export default function AccountCheckboxes({ accounts }: Props) {
     const [checkedStates, setCheckedStates] = useState(Array.from({ length: accounts.length }, () => true))
 
+    // If only one account, just display it and send its address with the form as a hidden input
+    if (accounts.length === 1) {
+        return (
+            <>
+                <input type='hidden' name='addresses' value={accounts[0].address} />
+                <AccountLabel account={accounts[0]} />
+            </>
+        )
+    }
+
+    // If multiple accounts, allow toggling them on/off
     const allChecked = checkedStates.every(value => value);
     const indeterminate = checkedStates.some(value => value) && !allChecked;
 
@@ -31,7 +42,7 @@ export default function AccountCheckboxes({ accounts }: Props) {
     ));
 
     return (
-        <>
+        <Stack gap={2}>
             <Checkbox
                 size='md'
                 mb='sm'
@@ -41,7 +52,7 @@ export default function AccountCheckboxes({ accounts }: Props) {
                 onChange={() => setCheckedStates(Array.from({ length: accounts.length }, () => !allChecked))}
             />
             {accountCheckboxes}
-        </>
+        </Stack>
     )
 
 }
