@@ -2,14 +2,15 @@ import { useWallet } from "@wallet-standard/react-core";
 import { useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
-import { Button, Checkbox, Container, Flex, MantineColor, SimpleGrid, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, Text, TextInput } from "@mantine/core";
-import { AccountLabel, shortAddress } from "../components/AccountLabel";
+import { Button, Container, Flex, MantineColor, SimpleGrid, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, Text, TextInput } from "@mantine/core";
+import { shortAddress } from "../components/AccountLabel";
 import { ActionFunctionArgs, Form, useActionData, useNavigation } from "react-router-dom";
 import { Address, LamportsUnsafeBeyond2Pow53Minus1, createSolanaRpc, isAddress, mainnet } from "@solana/web3.js";
 import { displayLamportsAsSol } from "../utils/lamports";
 import { PieChart, PieChartCell } from "@mantine/charts";
 import { queryClient } from '../queries/queryClient';
 import { getBalance, getBalanceQueryKey } from "../queries/getBalance";
+import AccountCheckboxes from "../components/AccountCheckboxes";
 
 type AddressWithBalance = {
     address: Address,
@@ -144,9 +145,8 @@ export default function Root() {
 
                             <Stack gap={2}>
                                 {accounts.length > 0 ?
-                                    accounts.map(account => (
-                                        <Checkbox key={account.address} name='addresses' value={account.address} defaultChecked={true} size='md' label={<AccountLabel account={account} />} />
-                                    )) :
+                                    <AccountCheckboxes accounts={accounts} />
+                                    :
                                     <Text> Connect a wallet to get started...</Text>
                                 }
                             </Stack>
