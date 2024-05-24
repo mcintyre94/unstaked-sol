@@ -2,7 +2,7 @@ import { useWallet } from "@wallet-standard/react-core";
 import { useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
-import { Button, Container, Flex, MantineColor, SimpleGrid, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, Text, TextInput } from "@mantine/core";
+import { Button, Container, Flex, Loader, MantineColor, SimpleGrid, Stack, Table, TableData, Text, TextInput } from "@mantine/core";
 import { shortAddress } from "../components/AccountLabel";
 import { ActionFunctionArgs, Form, useActionData, useNavigation } from "react-router-dom";
 import { Address, LamportsUnsafeBeyond2Pow53Minus1, createSolanaRpc, isAddress, mainnet } from "@solana/web3.js";
@@ -68,7 +68,7 @@ type TableRow = {
     balanceLamports: LamportsUnsafeBeyond2Pow53Minus1 | undefined
 };
 
-function makeTableRows(
+function makeTableRowData(
     fetchedData: AddressWithBalance[],
     pendingAddresses: Address[] | undefined,
 ): TableRow[] {
@@ -114,12 +114,23 @@ export default function Root() {
         return actionData?.kind === 'success' ? actionData.data : []
     }, [actionData]);
 
-    const tableData = useMemo(() => {
-        return makeTableRows(fetchedData, pendingAddresses)
+    const tableRowData = useMemo(() => {
+        return makeTableRowData(fetchedData, pendingAddresses)
     }, [fetchedData, pendingAddresses]);
 
+    const tableData: TableData = {
+        head: [
+            hasLabels ? "Label" : "Address",
+            "Unstaked SOL"
+        ],
+        body: tableRowData.map(({ address, balanceLamports }) => [
+            addressLabels[address.toString()] ?? address,
+            balanceLamports ? displayLamportsAsSol(balanceLamports) : <Loader size='xs' />
+        ])
+    }
+
     const pieChartData: PieChartCell[] = useMemo(() => {
-        return tableData
+        return tableRowData
             .filter(({ balanceLamports }) => balanceLamports !== undefined)
             .slice(0, 10)
             .map(({ address, balanceLamports }, index) => ({
@@ -127,7 +138,7 @@ export default function Root() {
                 value: Number(balanceLamports),
                 color: colors[index]
             }))
-    }, [tableData, addressLabels]);
+    }, [tableRowData, addressLabels]);
 
     if (isLoadingStoredWallet) return null;
 
@@ -145,6 +156,8 @@ export default function Root() {
 
                             <Stack gap={2}>
                                 {accounts.length > 0 ?
+                                    // TODO: probably make this work better with a single account
+                                    // maybe just hide it all and just have the fetch button?
                                     <AccountCheckboxes accounts={accounts} />
                                     :
                                     <Text> Connect a wallet to get started...</Text>
@@ -159,22 +172,7 @@ export default function Root() {
                 </Flex>
 
                 <Stack>
-                    <Table striped withRowBorders withTableBorder>
-                        <TableThead>
-                            <TableTr>
-                                <TableTh>{hasLabels ? "Label" : "Address"}</TableTh>
-                                <TableTh>Unstaked SOL</TableTh>
-                            </TableTr>
-                        </TableThead>
-                        <TableTbody>
-                            {tableData.map(({ address, balanceLamports }) => (
-                                <TableTr>
-                                    <TableTd>{addressLabels[address.toString()] ?? address}</TableTd>
-                                    <TableTd>{balanceLamports ? displayLamportsAsSol(balanceLamports) : "Loading..."}</TableTd>
-                                </TableTr>
-                            ))}
-                        </TableTbody>
-                    </Table>
+                    <Table striped withRowBorders withTableBorder data={tableData} />
 
                     <Container mih={300} miw={300}>
                         {
