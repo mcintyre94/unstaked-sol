@@ -155,14 +155,14 @@ export default function Root() {
                     <Form method="POST">
 
                         <Flex direction='column' gap='lg' align='flex-start'>
-                            <TextInput required label="RPC Address" placeholder="https://mainnet.helius-rpc.com?api-key=" name='rpc' />
+                            <TextInput miw={300} required label="RPC Address" placeholder="https://mainnet.helius-rpc.com?api-key=" name='rpc' />
 
                             {accounts.length > 0 ?
                                 <AccountCheckboxes accounts={accounts} /> :
                                 <Text> Connect a wallet to get started...</Text>
                             }
 
-                            <Button type="submit" fit-content="true" disabled={pendingAddresses !== undefined}>
+                            <Button type="submit" fit-content="true" disabled={pendingAddresses !== undefined || accounts.length === 0}>
                                 Fetch
                             </Button>
                         </Flex>

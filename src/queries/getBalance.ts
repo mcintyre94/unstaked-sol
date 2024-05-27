@@ -3,7 +3,6 @@ import {
   GetBalanceApi,
   LamportsUnsafeBeyond2Pow53Minus1,
   Rpc,
-  lamports,
 } from "@solana/web3.js";
 import { QueryKey } from "@tanstack/react-query";
 
