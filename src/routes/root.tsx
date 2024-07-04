@@ -1,8 +1,8 @@
 import { useWallet } from "@wallet-standard/react-core";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useWalletLocalStorage } from "../hooks/useWalletLocalStorage";
 import { WalletMultiButton } from "../components/WalletMultiButton";
-import { Box, Button, Container, Flex, Loader, MantineColor, SimpleGrid, Stack, Table, TableData, Text, TextInput } from "@mantine/core";
+import { Box, Button, Container, Flex, Loader, MantineColor, MantineProvider, SimpleGrid, Stack, Table, TableData, Text, TextInput } from "@mantine/core";
 import { shortAddress } from "../components/AccountLabel";
 import { ActionFunctionArgs, Form, useActionData, useNavigation } from "react-router-dom";
 import { Address, LamportsUnsafeBeyond2Pow53Minus1, createSolanaRpc, isAddress, mainnet } from "@solana/web3.js";
@@ -11,6 +11,7 @@ import { PieChart, PieChartCell } from "@mantine/charts";
 import { queryClient } from '../queries/queryClient';
 import { getBalance, getBalanceQueryKey } from "../queries/getBalance";
 import AccountCheckboxes from "../components/AccountCheckboxes";
+import { createRoot } from "react-dom/client";
 
 type AddressWithBalance = {
     address: Address,
@@ -118,7 +119,7 @@ export default function Root() {
         return makeTableRowData(fetchedData, pendingAddresses)
     }, [fetchedData, pendingAddresses]);
 
-    const tableData: TableData = {
+    const tableData: TableData = useMemo(() => ({
         head: [
             "",
             hasLabels ? "Label" : "Address",
@@ -130,7 +131,7 @@ export default function Root() {
             addressLabels[address.toString()] ?? address,
             balanceLamports ? `◎${displayLamportsAsSol(balanceLamports)}` : <Loader size='xs' />
         ])
-    }
+    }), [addressLabels, hasLabels, tableRowData])
 
     const pieChartData: PieChartCell[] = useMemo(() => {
         return tableRowData
@@ -142,6 +143,53 @@ export default function Root() {
                 color: colors[index]
             }))
     }, [tableRowData, addressLabels]);
+
+    const openWindow = useCallback(async () => {
+        try {
+            const dpip = await window.documentPictureInPicture.requestWindow({
+                width: "250",
+                height: "300",
+            });
+
+            // Copied from https://github.com/chrisdavidmills/dom-examples/blob/929e39675d42b6642e96ede0b7cf4aa25eb822f5/document-picture-in-picture/main.js#L34
+            // Copy style sheets over from the initial document
+            // so that the player looks the same.
+            [...document.styleSheets].forEach((styleSheet) => {
+                try {
+                    const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+                    const style = document.createElement('style');
+
+                    style.textContent = cssRules;
+                    dpip.document.head.appendChild(style);
+                } catch (e) {
+                    const link = document.createElement('link');
+
+                    link.rel = 'stylesheet';
+                    link.type = styleSheet.type;
+                    link.media = styleSheet.media;
+                    link.href = styleSheet.href;
+                    dpip.document.head.appendChild(link);
+                }
+            })
+
+            const pipDiv = dpip.document.createElement("div");
+            pipDiv.setAttribute("id", "pip-root");
+            dpip.document.body.append(pipDiv);
+            const pipRoot = createRoot(
+                dpip.document.getElementById("pip-root")
+            );
+            pipRoot.render(
+                <MantineProvider defaultColorScheme='dark'>
+                    <Container m={8}>
+                        <Table striped withRowBorders withTableBorder data={tableData} />
+                    </Container>
+                </MantineProvider>
+            );
+        } catch (error) {
+            console.error(error);
+        }
+    }, [tableData])
+
 
     if (isLoadingStoredWallet) return null;
 
@@ -169,8 +217,14 @@ export default function Root() {
                     </Form>
                 </Flex>
 
-                <Stack>
+                <Stack align='start'>
                     <Table striped withRowBorders withTableBorder data={tableData} />
+
+                    {
+                        /*tableRowData.length > 0*/ true ?
+                            <Button onClick={openWindow}>Pop out</Button> :
+                            null
+                    }
 
                     <Container mih={400} miw={400}>
                         {
